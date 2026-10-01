@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.data_loader import get_clean_ratings
 from src.svd_recommender import SVDRecommender
+from src.knn_recommender import ItemKNNRecommender
 from src.metrics import compute_rmse, compute_mae
 
 def run_benchmarks():
@@ -28,13 +29,20 @@ def run_benchmarks():
     # 3. Item Mean Baseline
     preds_item = [item_means.get(iid, global_mean) for iid in test_df["item_id"]]
 
-    # 4. SVD Recommender
+    # 4. Item-Item Cosine KNN
+    print("Fitting Item-Item Cosine KNN Recommender...")
+    knn = ItemKNNRecommender(k_neighbors=15)
+    knn.fit(train_df)
+    preds_knn = [knn.predict(row["user_id"], row["item_id"]) for _, row in test_df.iterrows()]
+
+    # 5. Regularized SVD Recommender
+    print("Fitting Regularized SVD Recommender...")
     svd = SVDRecommender(n_factors=40, lr=0.007, reg=0.04, n_epochs=25)
     svd.fit(train_df)
     preds_svd = [svd.predict(row["user_id"], row["item_id"]) for _, row in test_df.iterrows()]
 
-    models = ["Global Mean", "User Mean", "Item Mean", "Regularized SVD"]
-    all_preds = [preds_global, preds_user, preds_item, preds_svd]
+    models = ["Global Mean", "User Mean", "Item Mean", "Item-Item KNN", "Regularized SVD"]
+    all_preds = [preds_global, preds_user, preds_item, preds_knn, preds_svd]
 
     results = []
     for name, p in zip(models, all_preds):
@@ -45,11 +53,11 @@ def run_benchmarks():
         })
 
     benchmark_df = pd.DataFrame(results)
-    print("\n" + "=" * 45)
+    print("\n" + "=" * 50)
     print("        RECOMMENDER BENCHMARK RESULTS")
-    print("=" * 45)
+    print("=" * 50)
     print(benchmark_df.to_string(index=False))
-    print("=" * 45 + "\n")
+    print("=" * 50 + "\n")
 
     os.makedirs("outputs", exist_ok=True)
     benchmark_df.to_csv("outputs/benchmark_results.csv", index=False)

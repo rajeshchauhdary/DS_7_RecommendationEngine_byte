@@ -2,4 +2,5 @@ Model,RMSE,MAE
 Global Mean,1.1238,0.9425
 User Mean,1.0388,0.8322
 Item Mean,1.0208,0.8159
+Item-Item KNN,1.9919,1.6535
 Regularized SVD,0.9185,0.7242
