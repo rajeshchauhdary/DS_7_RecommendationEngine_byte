@@ -4,5 +4,3 @@ models/*.pkl
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
-outputs/*.png
-outputs/*.csv
